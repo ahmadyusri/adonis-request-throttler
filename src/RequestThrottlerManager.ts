@@ -32,9 +32,10 @@ export default class RequestThrottlerManager implements RequestThrottlerManagerC
 	public async verifyClient(
 		clientIdentifier,
 		permittedAttemptCount?: number,
-		permittedAttemptPeriod?: number
+		permittedAttemptPeriod?: number,
+		requestId?: string
 	): Promise<VerificationResult> {
-		return this.verify(clientIdentifier, permittedAttemptCount, permittedAttemptPeriod)
+		return this.verify(clientIdentifier, permittedAttemptCount, permittedAttemptPeriod, requestId)
 	}
 
 	public async verifyRequest(
@@ -44,13 +45,19 @@ export default class RequestThrottlerManager implements RequestThrottlerManagerC
 	) {
 		const clientIdentifier = await this.clientRecognizer.identifyClient(request)
 
-		return this.verify(clientIdentifier, permittedAttemptCount, permittedAttemptPeriod)
+		return this.verify(
+			clientIdentifier,
+			permittedAttemptCount,
+			permittedAttemptPeriod,
+			request.id()
+		)
 	}
 
 	protected async verify(
 		identifier: string,
-		permittedAttemptCount: number | undefined,
-		permittedAttemptPeriodParam: number | undefined
+		permittedAttemptCount?: number,
+		permittedAttemptPeriodParam?: number,
+		requestId?: string
 	): Promise<VerificationResult> {
 		permittedAttemptCount = permittedAttemptCount || this.config.maxAttempts
 		const permittedAttemptPeriod: number =
@@ -62,22 +69,24 @@ export default class RequestThrottlerManager implements RequestThrottlerManagerC
 			permittedAttemptPeriod,
 			this.config.ttlUnits
 		)
-		let { attemptCount, resetTime } =
+		let { attemptCount, resetTime, lastRequestId } =
 			(await this.cacheStorage.get<VisitorData>(identifier)) ||
 			RequestThrottlerManager.buildDataForNewVisitor(initResetTime)
 
 		if (!this.verifyByAttemptCount(attemptCount, permittedAttemptCount)) {
 			verificationResult = false
 		} else {
-			resetTime = RequestThrottlerManager.createResetTime(
-				permittedAttemptPeriod,
-				this.config.ttlUnits
-			)
-			await this.cacheStorage.put<VisitorData>(
-				identifier,
-				{ attemptCount: attemptCount + 1, resetTime },
-				permittedAttemptPeriod
-			)
+			if (lastRequestId !== requestId || requestId === undefined) {
+				resetTime = RequestThrottlerManager.createResetTime(
+					permittedAttemptPeriod,
+					this.config.ttlUnits
+				)
+				await this.cacheStorage.put<VisitorData>(
+					identifier,
+					{ attemptCount: attemptCount + 1, resetTime, lastRequestId: requestId },
+					permittedAttemptPeriod
+				)
+			}
 		}
 
 		return {
@@ -96,7 +105,7 @@ export default class RequestThrottlerManager implements RequestThrottlerManagerC
 	}
 
 	protected static buildDataForNewVisitor(resetTime: number) {
-		return { attemptCount: 0, resetTime }
+		return { attemptCount: 0, resetTime, lastRequestId: undefined }
 	}
 
 	protected static createResetTime(permittedAttemptPeriod: number, ttlUnits: string) {
