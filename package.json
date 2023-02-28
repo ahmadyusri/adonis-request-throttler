@@ -1,6 +1,6 @@
 {
-	"name": "adonis-request-throttler",
-	"version": "2.0.3",
+	"name": "@ahmadyusri/adonis-request-throttler",
+	"version": "2.0.6",
 	"description": "Request throttler provider for AdonisJS 5",
 	"scripts": {
 		"mrm": "mrm --preset=@adonisjs/mrm-preset",
@@ -18,16 +18,16 @@
 		"version": "npm run build",
 		"prepare": "npm run build",
 		"run-prettier": "prettier --write .",
-		"sync-labels": "github-label-sync --labels ./node_modules/@adonisjs/mrm-preset/gh-labels.json reg2005/adonis5-cache"
+		"sync-labels": "github-label-sync --labels ./node_modules/@adonisjs/mrm-preset/gh-labels.json ahmadyusri/adonis-request-throttler"
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/reg2005/adonis5-cache.git"
+		"url": "git+https://github.com/ahmadyusri/adonis-request-throttler.git"
 	},
 	"keywords": [
 		"Adonis",
 		"5",
-		"adonis-request-throttler"
+		"@ahmadyusri/adonis-request-throttler"
 	],
 	"author": "Vladyslav Parashchenko",
 	"contributors": [
@@ -42,15 +42,16 @@
 	],
 	"license": "MIT",
 	"bugs": {
-		"url": "https://github.com/reg2005/adonis-request-throttler/issues"
+		"url": "https://github.com/ahmadyusri/adonis-request-throttler.git/issues"
 	},
-	"homepage": "https://github.com/reg2005/adonis-request-throttler#readme",
+	"homepage": "https://github.com/ahmadyusri/adonis-request-throttler.git#readme",
 	"types": "build/adonis-typings/index.d.ts",
 	"typings": "build/adonis-typings/index.d.ts",
 	"devDependencies": {
 		"@adonisjs/ioc-transformer": "^2.2.1",
 		"@adonisjs/mrm-preset": "^2.4.0",
 		"@types/jest": "^26.0.23",
+		"@types/ms": "^0.7.31",
 		"@types/node": "^14.17.1",
 		"@types/ramda": "^0.27.19",
 		"adonis-provider-tester": "git://github.com/VladyslavParashchenko/adonis-provider-tester.git#main",
@@ -105,9 +106,9 @@
 		"build/index.js"
 	],
 	"adonisjs": {
-		"types": "adonis-request-throttler",
+		"types": "@ahmadyusri/adonis-request-throttler",
 		"providers": [
-			"adonis-request-throttler"
+			"@ahmadyusri/adonis-request-throttler"
 		],
 		"templates": {
 			"config": [

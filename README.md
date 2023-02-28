@@ -1,5 +1,5 @@
 # Adonis-Request-Throttler
-> Request limiter for Adonis JS 5
+> Request limiter for Adonis JS 5 Fork from [adonis-request-throttler](https://www.npmjs.com/package/adonis-request-throttler)
 
 [![typescript-image]][typescript-url] [![npm-image]][npm-url] [![license-image]][license-url]
 
@@ -20,12 +20,12 @@
 # Installation
 Install [Adonis redis client](https://github.com/adonisjs/redis), if you want to use redis as storage for request info.
 ```bash
-npm i --save adonis-request-throttler
+npm i --save @ahmadyusri/adonis-request-throttler
 ```
 
 Install provider:
 ```bash
-node ace configure adonis-request-throttler
+node ace configure @ahmadyusri/adonis-request-throttler
 ```
 * For other configuration, please update the `config/request-throttler.ts`.
 
@@ -92,7 +92,7 @@ export default {
 
 	limitExceptionParams: {
 		code: 'E_LIMIT_EXCEPTION',
-		message: 'Maximum number of login attempts exceeded. Please try again later.',
+		message: 'Maximum number of login attempts exceeded.',
 		status: 429,
 	},
 
