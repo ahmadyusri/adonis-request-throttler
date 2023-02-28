@@ -4,6 +4,7 @@ declare module '@ioc:Adonis/Addons/RequestThrottler' {
 
 	export type VisitorData = {
 		attemptCount: number
+		resetTime: number
 	}
 
 	export interface ClientRecognizerContract {

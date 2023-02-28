@@ -11,6 +11,7 @@ export default class RequestLimitedException extends Exception {
 
 	public async handle(error: this, { response }: HttpContextContract) {
 		response.status(error.status).send({
+			success: false,
 			message: error.message,
 			code: error.code,
 		})

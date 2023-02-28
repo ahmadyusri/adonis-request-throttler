@@ -50,33 +50,40 @@ export default class RequestThrottlerManager implements RequestThrottlerManagerC
 	protected async verify(
 		identifier: string,
 		permittedAttemptCount: number | undefined,
-		permittedAttemptPeriod: number | undefined
+		permittedAttemptPeriodParam: number | undefined
 	): Promise<VerificationResult> {
 		permittedAttemptCount = permittedAttemptCount || this.config.maxAttempts
-		permittedAttemptPeriod = permittedAttemptPeriod || this.config.maxAttemptPeriod
+		const permittedAttemptPeriod: number =
+			permittedAttemptPeriodParam || this.config.maxAttemptPeriod
 
 		let verificationResult = true
 
-		const { attemptCount } =
-			(await this.cacheStorage.get<VisitorData>(identifier)) ||
-			RequestThrottlerManager.buildDataForNewVisitor()
-
-		await this.cacheStorage.put<VisitorData>(
-			identifier,
-			{ attemptCount: attemptCount + 1 },
-			permittedAttemptPeriod
+		let initResetTime = RequestThrottlerManager.createResetTime(
+			permittedAttemptPeriod,
+			this.config.ttlUnits
 		)
+		let { attemptCount, resetTime } =
+			(await this.cacheStorage.get<VisitorData>(identifier)) ||
+			RequestThrottlerManager.buildDataForNewVisitor(initResetTime)
 
 		if (!this.verifyByAttemptCount(attemptCount, permittedAttemptCount)) {
 			verificationResult = false
+		} else {
+			resetTime = RequestThrottlerManager.createResetTime(
+				permittedAttemptPeriod,
+				this.config.ttlUnits
+			)
+			await this.cacheStorage.put<VisitorData>(
+				identifier,
+				{ attemptCount: attemptCount + 1, resetTime },
+				permittedAttemptPeriod
+			)
 		}
 
 		return {
 			maxAttemptCount: permittedAttemptCount || this.config.maxAttempts,
 			attemptCount: attemptCount + 1,
-			resetTime: dayjs()
-				.add(ms(`${permittedAttemptPeriod}${this.config.ttlUnits}`), 'ms')
-				.unix(),
+			resetTime,
 			requestPermitted: verificationResult,
 		}
 	}
@@ -88,7 +95,13 @@ export default class RequestThrottlerManager implements RequestThrottlerManagerC
 		return userAttemptCount < (permittedAttemptCount || this.config.maxAttempts)
 	}
 
-	protected static buildDataForNewVisitor() {
-		return { attemptCount: 0 }
+	protected static buildDataForNewVisitor(resetTime: number) {
+		return { attemptCount: 0, resetTime }
+	}
+
+	protected static createResetTime(permittedAttemptPeriod: number, ttlUnits: string) {
+		return dayjs()
+			.add(ms(`${permittedAttemptPeriod}${ttlUnits}`), 'ms')
+			.unix()
 	}
 }

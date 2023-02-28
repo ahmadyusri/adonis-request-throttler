@@ -9,6 +9,7 @@ import { RequestContract } from '@ioc:Adonis/Core/Request'
 import Request from '@adonisjs/http-server/build/src/Request'
 import { deepEqual, instance, mock, verify, when } from 'ts-mockito'
 import dayjs from 'dayjs'
+import ms from 'ms'
 import DefaultClientRecognizer from '../src/ClientRecognizers/DefaultClientRecognizer'
 
 const testConfig: ThrottleConfig = {
@@ -23,7 +24,7 @@ const testConfig: ThrottleConfig = {
 
 	limitExceptionParams: {
 		code: 'E_LIMIT_EXCEPTION',
-		message: 'Maximum number of login attempts exceeded. Please try again later.',
+		message: 'Maximum number of login attempts exceeded.',
 		status: 429,
 	},
 
@@ -69,12 +70,8 @@ describe('Request Throttler Manager', () => {
 			)
 			throttleManager.useCacheStorage(instance(mockedCacheForStorageAccess))
 
-			const {
-				maxAttemptCount,
-				attemptCount,
-				resetTime,
-				requestPermitted,
-			} = await throttleManager.verifyRequest(fakeRequest)
+			const { maxAttemptCount, attemptCount, resetTime, requestPermitted } =
+				await throttleManager.verifyRequest(fakeRequest)
 
 			expect({ maxAttemptCount, attemptCount, requestPermitted }).toEqual({
 				requestPermitted: true,
@@ -96,6 +93,9 @@ describe('Request Throttler Manager', () => {
 		test('should reject request', async () => {
 			const cachedLastUserVisitData: VisitorData = {
 				attemptCount: testConfig.maxAttempts,
+				resetTime: dayjs()
+					.add(ms(`${testConfig.maxAttemptPeriod}${testConfig.ttlUnits}`), 'ms')
+					.unix(),
 			}
 			const mockedCache = mock(CacheManager)
 			when(mockedCache.get(requestIdentifier)).thenReturn(Promise.resolve(cachedLastUserVisitData))
@@ -106,12 +106,8 @@ describe('Request Throttler Manager', () => {
 			)
 			throttleManager.useCacheStorage(instance(mockedCacheForStorageAccess))
 
-			const {
-				maxAttemptCount,
-				attemptCount,
-				resetTime,
-				requestPermitted,
-			} = await throttleManager.verifyRequest(fakeRequest)
+			const { maxAttemptCount, attemptCount, resetTime, requestPermitted } =
+				await throttleManager.verifyRequest(fakeRequest)
 
 			expect({ maxAttemptCount, attemptCount, requestPermitted }).toEqual({
 				requestPermitted: false,
@@ -153,12 +149,8 @@ describe('Request Throttler Manager', () => {
 				)
 				throttleManager.useCacheStorage(instance(mockedCacheForStorageAccess))
 
-				const {
-					maxAttemptCount,
-					attemptCount,
-					resetTime,
-					requestPermitted,
-				} = await throttleManager.verifyRequest(fakeRequest)
+				const { maxAttemptCount, attemptCount, resetTime, requestPermitted } =
+					await throttleManager.verifyRequest(fakeRequest)
 
 				expect({ maxAttemptCount, attemptCount, requestPermitted }).toEqual({
 					requestPermitted: true,
@@ -181,6 +173,9 @@ describe('Request Throttler Manager', () => {
 		test('should verify request with custom attempt period', async () => {
 			const cachedLastUserVisitData: VisitorData = {
 				attemptCount: testConfig.maxAttempts,
+				resetTime: dayjs()
+					.add(ms(`${testConfig.maxAttemptPeriod}${testConfig.ttlUnits}`), 'ms')
+					.unix(),
 			}
 			const mockedCache = mock(CacheManager)
 			when(mockedCache.get(requestIdentifier)).thenReturn(Promise.resolve(cachedLastUserVisitData))
@@ -191,12 +186,8 @@ describe('Request Throttler Manager', () => {
 			)
 			throttleManager.useCacheStorage(instance(mockedCacheForStorageAccess))
 
-			const {
-				maxAttemptCount,
-				attemptCount,
-				resetTime,
-				requestPermitted,
-			} = await throttleManager.verifyRequest(fakeRequest, testConfig.maxAttempts * 2)
+			const { maxAttemptCount, attemptCount, resetTime, requestPermitted } =
+				await throttleManager.verifyRequest(fakeRequest, testConfig.maxAttempts * 2)
 
 			expect({ maxAttemptCount, attemptCount, requestPermitted }).toEqual({
 				requestPermitted: true,
@@ -218,6 +209,9 @@ describe('Request Throttler Manager', () => {
 		test('should verify request with custom attempt period and custom attempt period', async () => {
 			const cachedLastUserVisitData: VisitorData = {
 				attemptCount: testConfig.maxAttempts,
+				resetTime: dayjs()
+					.add(ms(`${testConfig.maxAttemptPeriod}${testConfig.ttlUnits}`), 'ms')
+					.unix(),
 			}
 			const mockedCache = mock(CacheManager)
 			when(mockedCache.get(requestIdentifier)).thenReturn(Promise.resolve(cachedLastUserVisitData))
@@ -228,16 +222,12 @@ describe('Request Throttler Manager', () => {
 			)
 			throttleManager.useCacheStorage(instance(mockedCacheForStorageAccess))
 
-			const {
-				maxAttemptCount,
-				attemptCount,
-				resetTime,
-				requestPermitted,
-			} = await throttleManager.verifyRequest(
-				fakeRequest,
-				testConfig.maxAttempts * 2,
-				testConfig.maxAttemptPeriod * 2
-			)
+			const { maxAttemptCount, attemptCount, resetTime, requestPermitted } =
+				await throttleManager.verifyRequest(
+					fakeRequest,
+					testConfig.maxAttempts * 2,
+					testConfig.maxAttemptPeriod * 2
+				)
 
 			expect({ maxAttemptCount, attemptCount, requestPermitted }).toEqual({
 				requestPermitted: true,
@@ -274,12 +264,8 @@ describe('Request Throttler Manager', () => {
 			)
 			throttleManager.useCacheStorage(instance(mockedCacheForStorageAccess))
 
-			const {
-				maxAttemptCount,
-				attemptCount,
-				resetTime,
-				requestPermitted,
-			} = await throttleManager.verifyClient(clientIdentifier)
+			const { maxAttemptCount, attemptCount, resetTime, requestPermitted } =
+				await throttleManager.verifyClient(clientIdentifier)
 
 			expect({ maxAttemptCount, attemptCount, requestPermitted }).toEqual({
 				requestPermitted: true,
@@ -301,6 +287,9 @@ describe('Request Throttler Manager', () => {
 		test('should return false as verification result, user has used all attempts', async () => {
 			const cachedLastUserVisitData: VisitorData = {
 				attemptCount: testConfig.maxAttempts,
+				resetTime: dayjs()
+					.add(ms(`${testConfig.maxAttemptPeriod}${testConfig.ttlUnits}`), 'ms')
+					.unix(),
 			}
 			const mockedCache = mock(CacheManager)
 			when(mockedCache.get(clientIdentifier)).thenReturn(Promise.resolve(cachedLastUserVisitData))
@@ -311,12 +300,8 @@ describe('Request Throttler Manager', () => {
 			)
 			throttleManager.useCacheStorage(instance(mockedCacheForStorageAccess))
 
-			const {
-				maxAttemptCount,
-				attemptCount,
-				resetTime,
-				requestPermitted,
-			} = await throttleManager.verifyClient(clientIdentifier)
+			const { maxAttemptCount, attemptCount, resetTime, requestPermitted } =
+				await throttleManager.verifyClient(clientIdentifier)
 
 			expect({ maxAttemptCount, attemptCount, requestPermitted }).toEqual({
 				requestPermitted: false,
@@ -338,6 +323,9 @@ describe('Request Throttler Manager', () => {
 		test('should verify user with custom attempt count', async () => {
 			const cachedLastUserVisitData: VisitorData = {
 				attemptCount: testConfig.maxAttempts,
+				resetTime: dayjs()
+					.add(ms(`${testConfig.maxAttemptPeriod}${testConfig.ttlUnits}`), 'ms')
+					.unix(),
 			}
 			const mockedCache = mock(CacheManager)
 			when(mockedCache.get(clientIdentifier)).thenReturn(Promise.resolve(cachedLastUserVisitData))
@@ -348,12 +336,8 @@ describe('Request Throttler Manager', () => {
 			)
 			throttleManager.useCacheStorage(instance(mockedCacheForStorageAccess))
 
-			const {
-				maxAttemptCount,
-				attemptCount,
-				resetTime,
-				requestPermitted,
-			} = await throttleManager.verifyClient(clientIdentifier, testConfig.maxAttempts * 2)
+			const { maxAttemptCount, attemptCount, resetTime, requestPermitted } =
+				await throttleManager.verifyClient(clientIdentifier, testConfig.maxAttempts * 2)
 
 			expect({ maxAttemptCount, attemptCount, requestPermitted }).toEqual({
 				requestPermitted: true,
@@ -375,6 +359,9 @@ describe('Request Throttler Manager', () => {
 		test('should use custom attempt period for verification', async () => {
 			const cachedLastUserVisitData: VisitorData = {
 				attemptCount: testConfig.maxAttempts,
+				resetTime: dayjs()
+					.add(ms(`${testConfig.maxAttemptPeriod}${testConfig.ttlUnits}`), 'ms')
+					.unix(),
 			}
 			const mockedCache = mock(CacheManager)
 			when(mockedCache.get(clientIdentifier)).thenReturn(Promise.resolve(cachedLastUserVisitData))
@@ -385,16 +372,12 @@ describe('Request Throttler Manager', () => {
 			)
 			throttleManager.useCacheStorage(instance(mockedCacheForStorageAccess))
 
-			const {
-				maxAttemptCount,
-				attemptCount,
-				resetTime,
-				requestPermitted,
-			} = await throttleManager.verifyClient(
-				clientIdentifier,
-				testConfig.maxAttempts,
-				testConfig.maxAttemptPeriod * 2
-			)
+			const { maxAttemptCount, attemptCount, resetTime, requestPermitted } =
+				await throttleManager.verifyClient(
+					clientIdentifier,
+					testConfig.maxAttempts,
+					testConfig.maxAttemptPeriod * 2
+				)
 
 			expect({ maxAttemptCount, attemptCount, requestPermitted }).toEqual({
 				requestPermitted: false,

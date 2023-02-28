@@ -7,6 +7,7 @@ import {
 } from '@ioc:Adonis/Addons/RequestThrottler'
 import { ResponseContract } from '@ioc:Adonis/Core/Response'
 import RequestLimitedException from '../Exceptions/RequestLimitedException'
+import dayjs from 'dayjs'
 
 export default class RequestThrottlerMiddleware {
 	constructor(
@@ -25,11 +26,20 @@ export default class RequestThrottlerMiddleware {
 			typeof maxAttemptPeriod === 'string' ? Number(maxAttemptPeriod) : maxAttemptPeriod
 		)
 
+		const resetTimeDate = dayjs.unix(limitParams.resetTime)
+		const diffTime = resetTimeDate.diff(dayjs(), 'second', false) // Seconds
+		let diffSeconds = ''
+		if (diffTime > 0) {
+			diffSeconds = ` ${diffTime} seconds`
+		}
+
+		const message = `${this.config.limitExceptionParams.message} Please try again later${diffSeconds}`
+
 		this.setHeaders(response, limitParams)
 
 		if (!requestPermitted) {
 			throw new RequestLimitedException(
-				this.config.limitExceptionParams.message,
+				message,
 				this.config.limitExceptionParams.status,
 				this.config.limitExceptionParams.code
 			)

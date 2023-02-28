@@ -20,7 +20,7 @@ const testConfig: ThrottleConfig = {
 
 	limitExceptionParams: {
 		code: 'E_LIMIT_EXCEPTION',
-		message: 'Maximum number of login attempts exceeded. Please try again later.',
+		message: 'Maximum number of login attempts exceeded.',
 		status: 429,
 	},
 
@@ -106,6 +106,7 @@ describe.each([
 
 		it('should allow request and send correct headers', async () => {
 			const response = await supertest(server.instance).get('/test').expect(429, {
+				success: false,
 				message: testConfig.limitExceptionParams.message,
 				code: testConfig.limitExceptionParams.code,
 			})
